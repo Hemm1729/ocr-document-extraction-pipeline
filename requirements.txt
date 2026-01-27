@@ -2,6 +2,10 @@ paddleocr
 pdf2image
 opencv-python-headless
 numpy
-google-generativeai
-python-dotenv
 ollama
+fastapi
+uvicorn
+python-multipart
+python-multipart
+streamlit
+requests

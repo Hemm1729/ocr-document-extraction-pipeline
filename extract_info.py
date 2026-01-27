@@ -2,7 +2,7 @@ import json
 import os
 import logging
 
-import time
+
 
 
 # Configure logging
@@ -32,11 +32,18 @@ def get_llm_extraction(text):
     6. Monthly_Payment - The amount of the monthly payment/installment.
     7. Graduation_Date - Expected Graduation Date (if present).
     
+    Additionally, analyze the FAIRNESS of the contract terms:
+    8. "fairness_score": A score from 0-100 (100 being most fair to the consumer).
+    9. "red_flags": A list of strings describing any unfair, predatory, or suspicious terms. IMPORTANT: You MUST include the specific values found in the text (e.g. 'Late charge of 5%' instead of just 'Late charge of %', or 'Prepayment penalty of $50'). Do NOT use placeholders.
+    10. "green_flags": A list of strings describing consumer-friendly terms (e.g. low APR, no prepayment penalty, clear disclosures).
+    11. "summary": A brief 1-2 sentence summary of the contract fairness.
+    
     you will definitely find the above values in the documents.. so deep search for the values and fill them instead of returning not found. I repeat never return NOT FOUND for any variable in any documnt.. search the whole document you will find it
 
     Output format:
     Return ONLY a valid JSON object. Do not include any explanation or markdown code blocks (no ```json).
-    Keys: "APR", "Finance_Charge", "Amount_Financed", "Total_Sale_Price", "VIN", "Monthly_Payment", "Graduation_Date".
+    Result:
+    Keys: "APR", "Finance_Charge", "Amount_Financed", "Total_Sale_Price", "VIN", "Monthly_Payment", "Graduation_Date", "fairness_score", "red_flags", "green_flags", "summary".
     If a value is not found, set it to "Not Found".
     
     Document Text:
@@ -66,53 +73,4 @@ def parse_ocr_text(ocr_data):
                     full_text += entry['text'] + " "
     return full_text
 
-def process_extraction(output_dir):
-    if not os.path.exists(output_dir):
-        logging.error(f"Output directory {output_dir} does not exist.")
-        return
 
-    json_files = [f for f in os.listdir(output_dir) if f.endswith('_ocr.json')]
-    
-    if not json_files:
-        logging.warning(f"No OCR results found in {output_dir}")
-        return
-
-    all_results = {}
-    
-    for file in json_files:
-        logging.info(f"Extracting info from {file} using Ollama...")
-        
-        try:
-            with open(os.path.join(output_dir, file), 'r') as f:
-                data = json.load(f)
-            
-
-            text_content = parse_ocr_text(data)
-            
-
-            try:
-                extracted_info = get_llm_extraction(text_content)
-            except Exception as e:
-                 logging.error(f"Ollama call failed: {e}")
-                 extracted_info = {"Error": f"Ollama failed. Is Ollama running? Did you run 'ollama pull llama3.2'? Error: {e}"}
-
-
-            original_name = file.replace('_ocr.json', '.pdf')
-            all_results[original_name] = extracted_info
-            
-
-            logging.info(f"Finished {file}.")
-            
-        except Exception as e:
-            logging.error(f"Error processing {file}: {e}")
-            
-    # Save consolidated results
-    summary_path = os.path.join(output_dir, "consolidated_results_llm.json")
-    with open(summary_path, 'w') as f:
-        json.dump(all_results, f, indent=4)
-    
-    logging.info(f"Extraction complete! Results saved to {summary_path}")
-
-if __name__ == "__main__":
-    OUTPUT_DIR = "output_data"
-    process_extraction(OUTPUT_DIR)

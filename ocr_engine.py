@@ -2,7 +2,7 @@ import os
 import json
 import logging
 from paddleocr import PaddleOCR
-from pdf2image import convert_from_path
+from pdf2image import convert_from_path, convert_from_bytes
 import numpy as np
 import cv2
 
@@ -10,8 +10,8 @@ import cv2
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Initialize PaddleOCR (OCR-only mode)
-# 'use_angle_cls' helps if the contract scan is slightly tilted
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
+# 'use_angle_cls' disabled for speed. Enable if scans are significantly rotated.
+ocr = PaddleOCR(use_angle_cls=False, lang='en')
 
 # Determine Poppler Path
 USER_POPPLER_BASE = r"C:\Users\HEMANTH KUMAR\Downloads\Release-25.12.0-0\poppler-25.12.0"
@@ -36,14 +36,18 @@ if not POPPLER_PATH:
     POPPLER_PATH = POTENTIAL_PATHS[0] # Fallback
 
 
-def extract_contract_data(pdf_path):
+def extract_contract_data(pdf_input):
     """
     Extracts text and coordinates from a PDF using OCR.
+    Args:
+        pdf_input: either a file path (str) or raw bytes.
     """
     try:
         # 1. Convert PDF pages to images
-        # This handles multi-page docs like the 18-page HCI contract
-        images = convert_from_path(pdf_path, poppler_path=POPPLER_PATH)
+        if isinstance(pdf_input, bytes):
+            images = convert_from_bytes(pdf_input, dpi=150, poppler_path=POPPLER_PATH)
+        else:
+            images = convert_from_path(pdf_input, dpi=150, poppler_path=POPPLER_PATH)
     except Exception as e:
         logging.error(f"Failed to convert PDF to images: {e}")
         logging.error(f"Ensure Poppler is installed and POPPLER_PATH is set correctly. Current path: {POPPLER_PATH}")
@@ -59,12 +63,8 @@ def extract_contract_data(pdf_path):
         # 2. Run OCR Detection and Recognition
         # This returns: [ [ [coordinates], (text, confidence) ], ... ]
         try:
-            result = ocr.ocr(img_array)
-            logging.info(f"OCR raw result type: {type(result)}")
-            if result:
-                 logging.info(f"OCR result length: {len(result)}")
-                 if len(result) > 0:
-                     logging.info(f"First item type: {type(result[0])}")
+            result = ocr.ocr(img_array, cls=False)
+
         
         except Exception as e:
             logging.error(f"OCR calculation threw exception: {e}")
