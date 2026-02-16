@@ -31,19 +31,20 @@ def get_llm_extraction(text):
     5. VIN - The 17-character Vehicle Identification Number.
     6. Monthly_Payment - The amount of the monthly payment/installment.
     7. Graduation_Date - Expected Graduation Date (if present).
+    8. Fair_Price - The fair price which that you suggest for the vehicle based on all the detailes extracted.
     
     Additionally, analyze the FAIRNESS of the contract terms:
-    8. "fairness_score": A score from 0-100 (100 being most fair to the consumer).
-    9. "red_flags": A list of strings describing any unfair, predatory, or suspicious terms. IMPORTANT: You MUST include the specific values found in the text (e.g. 'Late charge of 5%' instead of just 'Late charge of %', or 'Prepayment penalty of $50'). Do NOT use placeholders.
-    10. "green_flags": A list of strings describing consumer-friendly terms (e.g. low APR, no prepayment penalty, clear disclosures).
-    11. "summary": A brief 1-2 sentence summary of the contract fairness.
+    9. "fairness_score": A score from 0-100 (100 being most fair to the consumer).
+    10. "red_flags": A list of strings describing any unfair, predatory, or suspicious terms. IMPORTANT: You MUST include the specific values found in the text (e.g. 'Late charge of 5%' instead of just 'Late charge of %', or 'Prepayment penalty of $50'). Do NOT use placeholders.
+    11. "green_flags": A list of strings describing consumer-friendly terms (e.g. low APR, no prepayment penalty, clear disclosures).
+    12. "summary": A brief 1-2 sentence summary of the contract fairness.
     
     you will definitely find the above values in the documents.. so deep search for the values and fill them instead of returning not found. I repeat never return NOT FOUND for any variable in any documnt.. search the whole document you will find it
 
     Output format:
-    Return ONLY a valid JSON object. Do not include any explanation or markdown code blocks (no ```json).
+    Return ONLY a valid JSON object. No markdown.
     Result:
-    Keys: "APR", "Finance_Charge", "Amount_Financed", "Total_Sale_Price", "VIN", "Monthly_Payment", "Graduation_Date", "fairness_score", "red_flags", "green_flags", "summary".
+    Keys: "APR", "Finance_Charge", "Amount_Financed", "Total_Sale_Price", "VIN", "Monthly_Payment", "Graduation_Date", "Fair_Price", "fairness_score", "red_flags", "green_flags", "summary".
     If a value is not found, set it to "Not Found".
     
     Document Text:

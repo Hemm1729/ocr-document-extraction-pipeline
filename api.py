@@ -3,6 +3,10 @@ import logging
 import json
 import sys
 from typing import List, Dict, Any
+
+# Disable PaddleOCR model check to speed up startup
+os.environ["DISABLE_MODEL_SOURCE_CHECK"] = "True"
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -14,6 +18,7 @@ from ocr_engine import extract_contract_data
 from extract_info import get_llm_extraction, parse_ocr_text
 from db import DatabaseManager
 from vin_service import lookup_vin
+from chat_service import chat_with_document
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -33,6 +38,11 @@ app.add_middleware(
 
 # Initialize Database
 db = DatabaseManager()
+
+class ChatRequest(BaseModel):
+    doc_id: int
+    message: str
+    history: List[Dict[str, str]] = []
 
 @app.post("/process")
 async def process_document(file: UploadFile = File(...)):
@@ -102,10 +112,16 @@ def delete_document(doc_id: int):
          raise HTTPException(status_code=404, detail="Document not found or could not be deleted")
     return {"message": "Document deleted"}
 
+@app.post("/chat")
+def chat(request: ChatRequest):
+    """Chat with a document."""
+    response = chat_with_document(request.doc_id, request.message, request.history)
+    if "error" in response:
+        raise HTTPException(status_code=500, detail=response["error"])
+    return response
+
 if __name__ == "__main__":
     import uvicorn
-    # Disable PaddleOCR model check to speed up startup
-    os.environ["DISABLE_MODEL_SOURCE_CHECK"] = "True"
     
     print("\n" + "="*50)
     print("Server is starting (Database Mode)!")

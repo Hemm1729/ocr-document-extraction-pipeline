@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Initialize PaddleOCR (OCR-only mode)
 # 'use_angle_cls' disabled for speed. Enable if scans are significantly rotated.
-ocr = PaddleOCR(use_angle_cls=False, lang='en')
+ocr = PaddleOCR(use_angle_cls=False, lang='en', enable_mkldnn=True)
 
 # Determine Poppler Path
 USER_POPPLER_BASE = r"C:\Users\HEMANTH KUMAR\Downloads\Release-25.12.0-0\poppler-25.12.0"
@@ -45,9 +45,9 @@ def extract_contract_data(pdf_input):
     try:
         # 1. Convert PDF pages to images
         if isinstance(pdf_input, bytes):
-            images = convert_from_bytes(pdf_input, dpi=150, poppler_path=POPPLER_PATH)
+            images = convert_from_bytes(pdf_input, dpi=150, poppler_path=POPPLER_PATH, thread_count=4)
         else:
-            images = convert_from_path(pdf_input, dpi=150, poppler_path=POPPLER_PATH)
+            images = convert_from_path(pdf_input, dpi=150, poppler_path=POPPLER_PATH, thread_count=4)
     except Exception as e:
         logging.error(f"Failed to convert PDF to images: {e}")
         logging.error(f"Ensure Poppler is installed and POPPLER_PATH is set correctly. Current path: {POPPLER_PATH}")
@@ -63,7 +63,7 @@ def extract_contract_data(pdf_input):
         # 2. Run OCR Detection and Recognition
         # This returns: [ [ [coordinates], (text, confidence) ], ... ]
         try:
-            result = ocr.ocr(img_array, cls=False)
+            result = ocr.ocr(img_array)
 
         
         except Exception as e:

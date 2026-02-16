@@ -102,6 +102,7 @@ class DatabaseManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute('DELETE FROM documents WHERE id = ?', (doc_id,))
+            rows_deleted = cursor.rowcount
             
             # Check if table is empty, if so, reset ID counter
             cursor.execute('SELECT COUNT(*) FROM documents')
@@ -110,7 +111,7 @@ class DatabaseManager:
                 cursor.execute("DELETE FROM sqlite_sequence WHERE name='documents'")
                 
             conn.commit()
-            return cursor.rowcount > 0 or count == 0 # Return true if delete happened or already empty
+            return rows_deleted > 0
         except Exception as e:
             logging.error(f"Failed to delete document {doc_id}: {e}")
             return False
